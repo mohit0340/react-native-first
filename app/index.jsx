@@ -1,10 +1,13 @@
-import React, { useRef } from 'react';
+import React, { useContext, useRef } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
-import { router } from 'expo-router';
+import {  useRouter } from 'expo-router';
+import { MainContext } from './Service/context/context';
 
 const Index = () => {
   const video = useRef(null);
+  const router=useRouter()
+  const {user}=useContext(MainContext)
 
   return (
     <View style={styles.container}>
@@ -22,10 +25,10 @@ const Index = () => {
       <View style={styles.overlay}>
         <Text style={styles.text}>DHARVEE Ecommerce</Text>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => router.push('auth/login')}>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/auth/login')}>
             <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => router.push('auth/register')}>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/auth/register')}>
             <Text style={styles.buttonText}>Register</Text>
           </TouchableOpacity>
         </View>
@@ -65,6 +68,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around'
  
-  }})
+  } , button: {
+    backgroundColor: 'gold',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginHorizontal: 10,
+  },
+  buttonText: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },})
 
   export default Index;

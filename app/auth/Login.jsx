@@ -1,39 +1,59 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+import { useRouter } from 'expo-router';
+
 
 const Login = ({ navigation }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+
+const router =useRouter()
+
+  const validationSchema = Yup.object().shape({
+    // email: Yup.string().email('Invalid email address').required('Email is required'),
+    // password: Yup.string().required('Password is required'),
+  });
+
+  const handleLogin = (values) => {
     // Add your login logic here (e.g., API call)
-    if (email =='test@example.com' && password =='password') {
-      Alert.alert('Login Successful');
-      navigation.navigate('Home');
-    } else {
-      Alert.alert('Invalid email or password');
-    }
+    router.replace('/(tabs)/');
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button title="Login" onPress={handleLogin} />
+      <Formik
+        initialValues={{ email: '', password: '' }}
+        validationSchema={validationSchema}
+        onSubmit={handleLogin}
+      >
+        {({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
+          <>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={values.email}
+              onChangeText={handleChange('email')}
+              onBlur={handleBlur('email')}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            {touched.email && errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={values.password}
+              onChangeText={handleChange('password')}
+              onBlur={handleBlur('password')}
+              secureTextEntry
+            />
+            {touched.password && errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+            <Button title="Login" onPress={handleSubmit} />
+            <TouchableOpacity onPress={()=>{router.replace('/auth/register')} } style={{ marginTop:20,alignSelf:"flex-end"}}><Text>If you are new Register first</Text></TouchableOpacity>
+          </>
+        )}
+      </Formik>
     </View>
   );
 };
@@ -56,6 +76,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 8,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 12,
   },
 });
 

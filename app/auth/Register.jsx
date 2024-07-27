@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert, Image, ScrollView } from 'react-native';
+import React, { useContext, useState } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Image, ScrollView, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Ionicons } from '@expo/vector-icons';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
+import { useRouter } from 'expo-router';
+import { MainContext } from '../Service/context/context';
 
 const validationSchema = Yup.object().shape({
   firstname: Yup.string().min(3, 'First name must be at least 3 characters').required('First name is required'),
@@ -16,13 +17,15 @@ const validationSchema = Yup.object().shape({
     .matches(/[0-9]/, 'Password must contain at least one number')
     .matches(/[!@#\$%\^&\*]/, 'Password must contain at least one special character')
     .required('Password is required'),
-  mobile: Yup.string().required('Mobile number is required'),
-  image: Yup.string().required('Image is required'),
+  mobile: Yup.string().matches(/^\d{10}$/, 'Mobile number must be 10 digits').required('Mobile number is required'),
+  avatar: Yup.mixed().required('Image is required'),
 });
 
 const Register = () => {
   const [image, setImage] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const {RegisterUser}=useContext(MainContext)
+  const router = useRouter();
 
   const pickImage = async (setFieldValue) => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -34,25 +37,40 @@ const Register = () => {
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
-      setFieldValue('image', result.assets[0].uri);
+      setFieldValue('avatar', result.assets[0].uri);
     }
   };
 
-  const handleRegister = (values) => {
-    // Add your registration logic here (e.g., API call)
-    Alert.alert('Registration Successful', JSON.stringify({ ...values, image }, null, 2));
+  const handleRegister = async (values) => {
+    const formData = new FormData();
+    formData.append('firstname', values.firstname);
+    formData.append('lastname', values.lastname);
+    formData.append('email', values.email);
+    formData.append('password', values.password);
+    formData.append('mobile', values.mobile);
+    if (values.avatar) {
+      formData.append('avatar', {
+        uri: values.avatar,
+    
+      });
+    }
+
+ RegisterUser(formData)
+
+  
   };
 
   return (
-    <ScrollView>
+    <ScrollView contentContainerStyle={styles.container}>
       <Formik
-        initialValues={{ firstname: '', lastname: '', email: '', password: '', mobile: '', image: '' }}
+        initialValues={{ firstname: '', lastname: '', email: '', password: '', mobile: '', avatar: '' }}
         validationSchema={validationSchema}
         onSubmit={handleRegister}
       >
         {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue }) => (
-          <View style={styles.container}>
+          <View>
             <Text style={styles.title}>Register</Text>
+            
             <TextInput
               style={styles.input}
               placeholder="First Name"
@@ -82,7 +100,7 @@ const Register = () => {
             />
             {touched.email && errors.email && <Text style={styles.error}>{errors.email}</Text>}
             
-            <View style={[styles.passwordContainer,{marginBottom:"0"}]} >
+            <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.input}
                 placeholder="Password"
@@ -91,17 +109,14 @@ const Register = () => {
                 value={values.password}
                 secureTextEntry={!showPassword}
               />
-            
-
               <TouchableOpacity
                 style={styles.showButton}
                 onPress={() => setShowPassword(!showPassword)}
               >
-                <Ionicons name={showPassword ? 'eye' : 'eye-off'} size={24} color="black" />
+                <Text>{showPassword ? 'Hide' : 'Show'}</Text>
               </TouchableOpacity>
             </View>
             {touched.password && errors.password && <Text style={styles.error}>{errors.password}</Text>}
-            
             
             <TextInput
               style={styles.input}
@@ -112,16 +127,19 @@ const Register = () => {
               keyboardType="phone-pad"
             />
             {touched.mobile && errors.mobile && <Text style={styles.error}>{errors.mobile}</Text>}
-            <View style={{marginBottom:10}}>
-            <Button title="Pick an image from gallery"  onPress={() => pickImage(setFieldValue)}  /></View>
-            {touched.image && errors.image && <Text style={styles.error}>{errors.image}</Text>}
+            
+            <Button title="Pick an image from gallery" onPress={() => pickImage(setFieldValue)} />
+            {touched.avatar && errors.avatar && <Text style={styles.error}>{errors.avatar}</Text>}
             {image && (
-              <View style={[styles.imageContainer,{marginBottom:10}]}>
+              <View style={styles.imageContainer}>
                 <Image source={{ uri: image }} style={styles.image} />
               </View>
             )}
             
             <Button title="Register" onPress={handleSubmit} />
+            <TouchableOpacity onPress={() => router.replace('/auth/login')} style={styles.loginLink}>
+              <Text>If you are already a user, Login</Text>
+            </TouchableOpacity>
           </View>
         )}
       </Formik>
@@ -133,8 +151,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    marginBottom: "30%"
+    padding: 16,
   },
   title: {
     fontSize: 24,
@@ -148,7 +165,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 8,
-    width: '100%',
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -158,7 +174,7 @@ const styles = StyleSheet.create({
   showButton: {
     position: 'absolute',
     right: 10,
-    top:10
+    top: 10,
   },
   imageContainer: {
     marginTop: 10,
@@ -173,6 +189,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'red',
     marginBottom: 8,
+  },
+  loginLink: {
+    marginTop: 20,
+    alignSelf: 'flex-end',
   },
 });
 
