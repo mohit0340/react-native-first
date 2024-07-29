@@ -102,12 +102,13 @@ const Register = () => {
             
             <View style={styles.passwordContainer}>
               <TextInput
-                style={styles.input}
+                style={[styles.input,{width:"100%"}]}
                 placeholder="Password"
                 onChangeText={handleChange('password')}
                 onBlur={handleBlur('password')}
                 value={values.password}
                 secureTextEntry={!showPassword}
+              
               />
               <TouchableOpacity
                 style={styles.showButton}

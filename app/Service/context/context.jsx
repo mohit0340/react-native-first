@@ -1,22 +1,48 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import { StyleSheet, View,ToastAndroid } from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 export const MainContext=createContext()
 const Context = ({children}) => {
 const [product,setProduct]=useState('')
 const [user,setUser]=useState('')
-const localpath='192.168.1.10'
+const localpath='https://orange-keys-hear.loca.lt'
 
 
-const LoginUser=()=>{
+const UserLogin = async (values) => {
+  try {
+    const res = await axios.post(`${localpath}/api/users/login`, values);
 
-}
+    if (res.status === 200) {
+      console.log(res.data);
+      ToastAndroid.show(res.data.message, ToastAndroid.SHORT);
+
+      // Store the token in AsyncStorage
+      await AsyncStorage.setItem('token', res.data.token);
+
+      // Confirm the token is set by retrieving it
+      const token = await AsyncStorage.getItem('token');
+      console.log('Stored token:', token);
+
+      return true;
+    } else {
+      ToastAndroid.show('Login failed', ToastAndroid.SHORT);
+      console.log("Login failed");
+      return false;
+    }
+  } catch (err) {
+    console.log(err.response?.data?.message || err.message);
+    ToastAndroid.show('Login failed', ToastAndroid.SHORT);
+    return false;
+  }
+};
 
 const RegisterUser=async(formData)=>{
+
     try {
         const res = await axios.post(
-          `http://localhost:5000/api/users/register`,
+          ` ${localpath}/api/users/register`,
           formData,
           {
             headers: {
@@ -24,7 +50,7 @@ const RegisterUser=async(formData)=>{
             },
           }
         );
-        if (res.status === 200) {
+        if (res.status == 200) {
        
           ToastAndroid.show('Registered Succesfully', ToastAndroid.SHORT);
          
@@ -44,12 +70,44 @@ const RegisterUser=async(formData)=>{
       }
 }
 
+const getProducts = async (categoryval = '', searchterm = '') => {
+  setProgress(true);
+
+  try {
+    let res = await axios.get('http://localhost:5000/api/products/', {
+      params: {
+        category: categoryval !== 'all' ? categoryval : '', // Default to empty if 'all'
+        searchTerm: searchterm
+      }
+    });
+
+
+    if (res.status === 200) {
+      setProgress(false);
+      setProduct(res.data.products);
+      console.log(res);
+      return true;
+    } else {
+      setProgress(false);
+      return false;
+    }
+  } catch (err) {
+    console.log(err);
+    setProgress(false);
+    return false;
+  }
+};
+
+
+
+
+
 
 
 
 
     return (
-        <MainContext.Provider value={{product,user,LoginUser,RegisterUser}}>
+        <MainContext.Provider value={{product,getProducts,user,UserLogin,RegisterUser}}>
                 {children}
         </MainContext.Provider>
     
